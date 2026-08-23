@@ -1,0 +1,236 @@
+/* Kills the default browser margins locally without needing an index.css */
+:global(body) {
+  margin: 0;
+  padding: 0;
+}
+
+/* The Wrapper (Replaces signup.module.css).
+  All your variables are declared HERE so they don't leak anywhere else in the app. 
+*/
+.root {
+  --body-background: hsl(0, 0%, 9%);
+  --form-background: hsl(0, 0%, 12%);
+  --input-background: hsl(0, 0%, 18%);
+  --button-background: hsl(0, 0%, 18%);
+  --button-hover: hsl(0, 0%, 15%);
+  --header-color: hsl(0, 0%, 92%);
+  --text-color: hsl(0, 0%, 80%);
+  --placeholder-color: hsl(0, 0%, 45%);
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --focus-ring: 0 0 0 3px hsla(0, 0%, 70%, 0.3);
+
+  background-color: var(--body-background);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+}
+
+:global(.light-mode) .root {
+  --body-background: hsl(0, 0%, 85%);
+  --form-background: hsl(0, 0%, 95%);
+  --input-background: hsl(0, 0%, 100%);
+  --button-background: hsl(0, 0%, 100%);
+  --button-hover: hsl(0, 0%, 85%);
+  --header-color: hsl(0, 0%, 15%);
+  --text-color: hsl(0, 0%, 25%);
+  --placeholder-color: hsl(0, 0%, 60%);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --focus-ring: 0 0 0 3px hsla(0, 0%, 50%, 0.3);
+}
+
+.root * {
+  box-sizing: border-box;
+}
+
+/* The Rest of your exact form styles */
+.formContainer {
+  background-color: var(--form-background);
+  border-radius: 16px;
+  padding: 14px; /* Kept at 40px so it isn't cramped */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.formContainer h1 {
+  color: var(--header-color);
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.formContainer p {
+  font-family: monospace;
+  margin-bottom: 30px;
+  color: var(--text-color);
+}
+
+.formContainer a {
+  text-decoration: none;
+  color: var(--text-color);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.formContainer a:hover {
+  color: hsl(210, 100%, 50%);
+}
+
+.inputField {
+  width: 300px;
+  height: 35px;
+  margin-bottom: 20px;
+  border: none;
+  text-indent: 10px;
+  border-radius: 8px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.inputField:focus {
+  outline: none;
+}
+
+.inputField::placeholder {
+  color: var(--placeholder-color);
+  opacity: 1;
+}
+
+.submitBtn {
+  width: 300px;
+  height: 35px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--button-background);
+  color: var(--text-color);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  margin-bottom: 30px;
+}
+
+.submitBtn:hover {
+  background-color: var(--button-hover);
+}
+
+.passwordStrength {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 250px;
+  height: 15px;
+  border-radius: 8px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.strengthLabel {
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.otpPopup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.otpContent {
+  background-color: var(--form-background);
+  padding: 40px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 20px 35px -10px var(--shadow-color);
+  text-align: center;
+}
+
+.resendOTP {
+  background-color: transparent;
+  border: none;
+  color: white;
+  font-size: 15px;
+  transition: 0.15s all ease;
+}
+
+.resendOTP:hover {
+  color: blue;
+}
+
+
+/* ========================================= */
+/*          RESPONSIVE MEDIA QUERIES         */
+/* ========================================= */
+
+/* Half PC Screen / Tablet (approx 601px to 1024px) */
+@media screen and (max-width: 1024px) {
+  .formContainer {
+    width: 60vw;           /* Adapts relative to screen width */
+    max-width: 400px;      /* Caps out so it doesn't get ridiculously wide */
+    padding: 24px;
+  }
+
+  .inputField,
+  .submitBtn {
+    width: 100%;           /* Fills the flexible container */
+  }
+
+  .passwordStrength {
+    width: 100%;
+  }
+
+  .otpContent {
+    width: 60vw;
+    max-width: 400px;
+  }
+}
+
+/* Mobile Phones (600px and below) */
+@media screen and (max-width: 600px) {
+  .root {
+    /* Critical for phones: Removes hidden overflow so users can scroll 
+       if the virtual keyboard pops up and covers the screen. */
+    overflow-y: auto;
+    padding: 30px 0;
+  }
+
+  .formContainer {
+    width: 90vw;           /* Uses up most of the tight phone screen */
+    padding: 24px 16px;
+  }
+
+  .inputField,
+  .submitBtn {
+    width: 100%;
+    height: 42px;          /* Slightly taller targets for mobile tapping */
+  }
+
+  .passwordStrength {
+    width: 100%;
+  }
+
+  .otpContent {
+    width: 92vw;
+    padding: 24px 16px;
+  }
+  
+  .otpContent h1 {
+    font-size: 1.15rem;    /* Scales down the OTP header to prevent overflow */
+  }
+}

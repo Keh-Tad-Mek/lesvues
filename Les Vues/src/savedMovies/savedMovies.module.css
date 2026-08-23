@@ -1,0 +1,402 @@
+:global(body) {
+  margin: 0;
+  padding: 0;
+}
+
+.root {
+  --body-background: hsl(0, 0%, 11%);
+  --sub-color: hsl(0, 0%, 21%);
+  --opposite-color: white;
+  --sub-opposite-color: rgb(204, 204, 204);
+
+  display: flex;
+  flex-direction: column;
+  background-color: var(--body-background); 
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  width: 100vw;
+}
+
+.root * {
+    box-sizing: border-box;
+}
+
+header {
+    padding: 10px;
+    font-family: monospace;
+    width: 100%;
+    font-size: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- FULL SCREEN STYLES (Completely Unchanged) --- */
+header .Nav {
+    display: flex;
+    justify-content: space-between;
+}
+
+header .Nav nav {
+    margin-left: 40px;
+    margin-right: 40px;
+}
+
+header .Nav nav a {
+    text-decoration: none;
+    color: white;
+    transition: 0.15s ease;
+}
+
+header .Nav nav a:hover {
+    color: #0ea5e9;
+}
+
+.navIcon {
+    display: none;
+}
+
+.navText {
+    display: inline;
+}
+
+.actionContainer {
+    display: contents; 
+}
+/* -------------------------------------------------- */
+
+.savedContainer {
+    width: 100%;
+    padding: 20px 40px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.savedContainer h2 {
+    color: var(--opposite-color);
+    margin-bottom: 20px;
+}
+
+.emptyMessage {
+    color: var(--sub-opposite-color);
+    font-size: 16px;
+}
+
+.movieGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+.movieCard {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.25s ease;
+}
+
+.movieCard:hover {
+    transform: scale(1.05);
+}
+
+.movieCard img {
+    width: 100%;
+    border-radius: 8px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+}
+
+.movieCard h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sub-opposite-color);
+    text-align: center;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.moviecardheader {
+    justify-content: flex-end;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 10px;
+    z-index: 2;
+}
+
+.removeButton {
+    background-color: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.removeButton:hover {
+    background-color: #ff4040;
+    color: white;
+}
+
+.profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.profileButton {
+    margin-right: 20px;
+    font-size: 20px;
+    border: none;
+    border-radius: 30px;
+    padding: 5px;
+    cursor: pointer;
+    background: transparent;
+    color: white;
+}
+
+.profileOptions {
+    position: absolute;
+    padding: 6px;
+    top: 45px;
+    right: 20px;
+    min-width: 160px;
+    width: max-content;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 14px;
+    background-color: black;
+    z-index: 100;
+}
+
+.profileName {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.profileName input {
+    background-color: black;
+    border: none;
+    color: white;
+}
+
+.profileName button {
+    background-color: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+.profileName button:hover {
+    color: #0ea5e9;
+}
+
+.profileEmail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.profileEmail button {
+    border: none;
+    background-color: transparent;
+    color: white;
+}
+
+.logoutButton {
+    border: none;
+    background-color: transparent;
+    color: white;
+    transition: 0.15s ease;
+    cursor: pointer;
+}
+
+.logoutButton:hover {
+    color: red;
+}
+
+.loggedOut {
+    display: flex;
+    flex-direction: column;
+}
+
+.loggedOut a { 
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 18px;
+    text-decoration: none;
+    color: white;
+    transition: 0.15s ease;
+}
+
+.loggedOut a:hover {
+    color: #0ea5e9;
+}
+
+.dialogueBox {
+    position: fixed;
+    z-index: 1000;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    backdrop-filter: blur(4px);
+}
+
+.authPrompt {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+    font-size: 1.1rem;
+}
+
+.authLink {
+    color: #00aeff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.authLink:hover {
+    color: #33c4ff;
+    text-decoration: underline;
+}
+
+
+/* ========================================= */
+/*          RESPONSIVE MEDIA QUERIES         */
+/* ========================================= */
+
+/* Half PC Screen / Tablet (approx 601px to 1024px) */
+@media screen and (max-width: 1024px) {
+    .root {
+        /* Increased padding so content doesn't hide behind the raised dock */
+        padding-bottom: 110px; 
+    }
+
+    .actionContainer {
+        display: flex;
+        position: fixed;
+        /* Floating logic applied here */
+        bottom: 25px; 
+        left: 20px; 
+        width: calc(100vw - 40px); 
+        height: 60px;
+        background-color: var(--sub-color);
+        /* Switched to an all-around border and added rounded corners */
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        border-radius: 16px; 
+        justify-content: space-around;
+        align-items: center;
+        gap: 0;
+        z-index: 900;
+        /* Margin handles safe-area lifting on iPhones */
+        margin-bottom: env(safe-area-inset-bottom, 0px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); /* Adds visual floating depth */
+    }
+
+    header .Nav {
+        width: 70%;
+        justify-content: space-around;
+        gap: 0;
+    }
+
+    header .Nav nav {
+        margin: 0;
+    }
+
+    .navText { 
+        display: none; 
+    }
+    
+    .navIcon { 
+        display: inline-block; 
+        color: white; 
+        font-size: 22px;
+        transition: color 0.15s ease;
+    }
+    
+    header .Nav nav a:hover .navIcon {
+        color: #0ea5e9;
+    }
+
+    .profileButton {
+        margin-right: 0; 
+    }
+
+    .profileOptions {
+        top: auto;
+        /* Lifted up slightly more to avoid clipping into the raised dock */
+        bottom: 95px; 
+        right: 15px;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+    }
+
+    /* Smaller grid card sizing for half-screens */
+    .movieGrid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+    }
+
+    .movieCard h3 {
+        font-size: 12px;
+    }
+}
+
+/* Mobile Phones (600px and below) */
+@media screen and (max-width: 600px) {
+    header h1 {
+        font-size: 22px;
+    }
+
+    .savedContainer {
+        padding: 15px 16px;
+    }
+
+    /* Even tighter grid card sizing for mobile phones */
+    .movieGrid {
+        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+        gap: 12px;
+    }
+
+    .movieCard h3 {
+        font-size: 11px;
+    }
+
+    .removeButton {
+        width: 26px;
+        height: 26px;
+        font-size: 12px;
+    }
+}
