@@ -117,9 +117,6 @@ function Signin() {
           onOtpChange={setOtpValue}
           onVerifyOtp={handleVerifyOtp}
         >
-          <p style={{ marginBottom: '18px', marginTop: '18px' }}>
-            <Link to="/forgot-password">Forgot Password?</Link>
-          </p>
         </AuthForm>
       </div>
     </div>
