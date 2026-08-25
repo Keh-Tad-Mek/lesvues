@@ -300,7 +300,7 @@ function Home() {
 
     useEffect(() => {
 		console.log("Auth debug:", { isAuthenticated, isPending, user, error })
-	}, [isAuthenticated, isPending, user, error])
+	}, [isAuthenticated, isPending, user])
 
 
     return (
