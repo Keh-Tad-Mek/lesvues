@@ -298,9 +298,6 @@ function Home() {
         return () => clearTimeout(timer);
     }, [movieSearch]);
 
-    useEffect(() => {
-		console.log("Auth debug:", { isAuthenticated, isPending, user })
-	}, [isAuthenticated, isPending, user])
 
 
     return (
