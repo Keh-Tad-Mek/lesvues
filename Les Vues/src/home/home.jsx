@@ -298,6 +298,10 @@ function Home() {
         return () => clearTimeout(timer);
     }, [movieSearch]);
 
+    useEffect(() => {
+		console.log("Auth debug:", { isAuthenticated, isPending, user, error })
+	}, [isAuthenticated, isPending, user, error])
+
 
     return (
         <div className={homeStyles.root}>
