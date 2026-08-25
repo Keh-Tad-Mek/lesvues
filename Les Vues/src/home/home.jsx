@@ -299,7 +299,7 @@ function Home() {
     }, [movieSearch]);
 
     useEffect(() => {
-		console.log("Auth debug:", { isAuthenticated, isPending, user, error })
+		console.log("Auth debug:", { isAuthenticated, isPending, user })
 	}, [isAuthenticated, isPending, user])
 
 
