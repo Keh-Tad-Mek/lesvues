@@ -69,7 +69,8 @@ function Favorites() {
         }
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/favorites?page=${targetPage}`, {
+            // add base URL here
+            const response = await fetch(`/api/personal/favorites?page=${targetPage}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
@@ -139,7 +140,8 @@ function Favorites() {
         setCachedData(CACHE_KEY, updatedFavorites, page);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/favorites/${movieId}`, {
+            // add base URL here
+            const response = await fetch(`/api/personal/favorites/${movieId}`, {
                 method: "DELETE",
                 credentials: "include"
             });
