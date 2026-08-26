@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import authStyles from './AuthForm.module.css' // Import the new module
+import authStyles from './AuthForm.module.css'
+import Loading from '../utils/loading.jsx' // import the loading component
 
 export default function AuthForm({
   onSubmit,
@@ -30,7 +31,8 @@ export default function AuthForm({
   children,
   onResendOtp,
   canResend,
-  resendTimer
+  resendTimer,
+  isLoading = false // new prop
 }) {
   return (
     <div>
@@ -121,7 +123,15 @@ export default function AuthForm({
         )}
 
         <p>{footerText} <Link to={footerLinkTo}>{footerLinkText}</Link></p>
-        <button className={authStyles.submitBtn} type='submit'>{submitButtonText}</button>
+        
+        {/* Loading animation above the submit button */}
+        {isLoading && (
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
+            <Loading />
+          </div>
+        )}
+
+        <button className={authStyles.submitBtn} type='submit' disabled={isLoading}>{submitButtonText}</button>
 
         {children}
       </form>
