@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import authStyles from './AuthForm.module.css'
-import Loading from '../utils/loading.jsx' // import the loading component
+import authStyles from './AuthForm.module.css' // Import the new module
+import Loading from '../utils/loading.jsx'
 
 export default function AuthForm({
   onSubmit,
@@ -32,7 +32,7 @@ export default function AuthForm({
   onResendOtp,
   canResend,
   resendTimer,
-  isLoading = false // new prop
+  isLoading
 }) {
   return (
     <div>
@@ -40,7 +40,8 @@ export default function AuthForm({
       <div className={authStyles.otpPopup}
         style={{ display: displayOTPField }}
       >
-        <div className={authStyles.otpContent} style={{ position: 'relative' }}>
+        <div className={authStyles.otpContent} style={{ position: 
+'relative' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -55,14 +56,20 @@ export default function AuthForm({
               textAlign: 'center',
               fontFamily: 'monospace'
             }}>Check your Email</h1>
-            <button type="button" onClick={onCloseOtp} style={{ background: 'none', border: 'none', fontSize: '32px', cursor: 'pointer', color: 'var(--header-color)', lineHeight: '1', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px' }}>&times;</button>
+            <button type="button" onClick={onCloseOtp} style={{ 
+background: 'none', border: 'none', fontSize: '32px', cursor: 'pointer',
+ color: 'var(--header-color)', lineHeight: '1', padding: '0', display: 
+'flex', alignItems: 'center', justifyContent: 'center', width: '24px' 
+}}>&times;</button>
           </div>
           <p style={{
             margin: '0 0 20px 0',
             color: 'white',
             fontFamily: 'monospace',
             marginBottom:'30px'
-          }}>If you have sent a valid email and it is not already registered we will send an OTP. Make sure to check your spam folder if you don't see it</p>
+          }}>If you have sent a valid email and it is not already 
+registered we will send an OTP. Make sure to check your spam folder if 
+you don't see it</p>
           <input
             type="text"
             placeholder='Enter 6-digit code'
@@ -71,7 +78,8 @@ export default function AuthForm({
             className={authStyles.inputField}
             maxLength={6}
           />
-          <button type="button" className={authStyles.submitBtn} onClick={onVerifyOtp}>
+          <button type="button" className={authStyles.submitBtn} 
+onClick={onVerifyOtp}>
             Verify & Sign up
           </button>
           <button 
@@ -87,7 +95,8 @@ export default function AuthForm({
         </div>
       </div>
 
-      <form onSubmit={onSubmit} noValidate autoComplete='off' className={authStyles.formContainer}>
+      <form onSubmit={onSubmit} noValidate autoComplete='off' 
+className={authStyles.formContainer}>
         <h1>Les Vues</h1>
 
         <input
@@ -114,24 +123,29 @@ export default function AuthForm({
         />
 
         {showStrengthMeter && (
-          <div className={authStyles.passwordStrength} style={{ display: strengthVisibility }}>
-            <span className={authStyles.strengthLabel} style={{ color: `hsl(${hue}, 100%, 50%)` }}>
+          <div className={authStyles.passwordStrength} style={{ 
+display: strengthVisibility }}>
+            <span className={authStyles.strengthLabel} style={{ 
+color: `hsl(${hue}, 100%, 50%)` }}>
               {verbalStrengthValue}
             </span>
-            <progress value={strengthValue} max="100" className="strength-progress" style={{ accentColor: `hsl(${hue}, 100%, 50%)` }} />
+            <progress value={strengthValue} max="100" 
+className="strength-progress" style={{ accentColor: `hsl(${hue}, 100%, 
+50%)` }} />
           </div>
         )}
 
-        <p>{footerText} <Link to={footerLinkTo}>{footerLinkText}</Link></p>
+        <p>{footerText} <Link 
+to={footerLinkTo}>{footerLinkText}</Link></p>
         
-        {/* Loading animation above the submit button */}
         {isLoading && (
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
             <Loading />
           </div>
         )}
 
-        <button className={authStyles.submitBtn} type='submit' disabled={isLoading}>{submitButtonText}</button>
+        <button className={authStyles.submitBtn} 
+type='submit'>{submitButtonText}</button>
 
         {children}
       </form>
