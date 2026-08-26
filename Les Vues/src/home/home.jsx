@@ -53,6 +53,10 @@ function Home() {
                 console.error("Logout failed.")
                 return
             }
+            localStorage.removeItem('saved_movies_list')
+            localStorage.removeItem('saved_movies_list_stale')
+            localStorage.removeItem('favorite_movies_list');
+            localStorage.removeItem('favorite_movies_list_stale'); 
             setDisplayDialogueBox('none')
         } catch (error) {
             console.error("Error during log out.")
