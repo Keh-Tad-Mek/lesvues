@@ -2,7 +2,8 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import favoriteStyles from './favorites.module.css';
 import { authClient } from "../lib/auth-client.jsx";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faUser, faDoorOpen, faEnvelope, faPen, faHouse, faBookmark, faHeart } from '@fortawesome/free-solid-svg-icons';
+// Added faArrowsRotate for the refresh button
+import { faXmark, faUser, faDoorOpen, faEnvelope, faPen, faHouse, faBookmark, faHeart, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/useAuth.jsx';
 import Loading from '../utils/loading.jsx';
@@ -50,14 +51,33 @@ function Favorites() {
         setDisplayProfileOptions(prev => prev === "none" ? "flex" : "none");
     };
 
-    const fetchFavorites = async (targetPage) => {
-        if (isFetching.current || !hasMore) return;
+    // Manual refresh function
+    const handleRefresh = () => {
+        // Clear frontend cache completely
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(STALE_KEY);
+        
+        // Reset states
+        setFavoriteMovies([]);
+        existingIds.current.clear();
+        setPage(1);
+        setHasMore(true);
+        
+        // Fetch fresh data, bypassing frontend cache and triggering backend DB fetch
+        fetchFavorites(1, true);
+    };
+
+    // Added forceRefresh parameter
+    const fetchFavorites = async (targetPage, forceRefresh = false) => {
+        // Prevent fetching if already doing it, or if no more pages (unless we're forcing a refresh)
+        if (isFetching.current || (!hasMore && !forceRefresh)) return;
         isFetching.current = true;
 
         const isStale = localStorage.getItem(STALE_KEY);
         const cached = getCachedData(CACHE_KEY);
         
-        if (cached && !isStale && targetPage <= cached.page) {
+        // Only use cache if we are NOT force refreshing
+        if (!forceRefresh && cached && !isStale && targetPage <= cached.page) {
             if (targetPage === 1) {
                 setFavoriteMovies(cached.data);
                 existingIds.current.clear();
@@ -69,8 +89,12 @@ function Favorites() {
         }
 
         try {
-            // add base URL here
-            const response = await fetch(`/api/personal/favorites?page=${targetPage}`, {
+            // Append forceRefresh query parameter to instruct the backend to skip its cache
+            const url = forceRefresh 
+                ? `/api/personal/favorites?page=${targetPage}&forceRefresh=true`
+                : `/api/personal/favorites?page=${targetPage}`;
+
+            const response = await fetch(url, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
@@ -103,7 +127,8 @@ function Favorites() {
                 uniqueNew.forEach(m => existingIds.current.add(m.movie_id || m.id));
                 
                 setFavoriteMovies(prev => {
-                    const updatedMovies = (targetPage === 1 && isStale) 
+                    // If page 1 (stale or forced refresh), completely replace the array
+                    const updatedMovies = (targetPage === 1 && (isStale || forceRefresh)) 
                         ? [...uniqueNew] 
                         : [...prev, ...uniqueNew];
                         
@@ -140,7 +165,6 @@ function Favorites() {
         setCachedData(CACHE_KEY, updatedFavorites, page);
 
         try {
-            // add base URL here
             const response = await fetch(`/api/personal/favorites/${movieId}`, {
                 method: "DELETE",
                 credentials: "include"
@@ -234,7 +258,21 @@ function Favorites() {
             </header>
                         
             <div className={favoriteStyles.favoritesContainer}>
-                <h2>Your Favorites</h2>
+                {/* Header paired with the refresh button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <h2>Your Favorites</h2>
+                    {isAuthenticated && (
+                        <button 
+                            onClick={handleRefresh}
+                            className={favoriteStyles.refreshButton}
+                            style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}
+                            title="Refresh Database"
+                        >
+                            <FontAwesomeIcon icon={faArrowsRotate} />
+                        </button>
+                    )}
+                </div>
+
                 {!isAuthenticated ? (
                     <div className={favoriteStyles.authPrompt}>
                         <p>
