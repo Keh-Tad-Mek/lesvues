@@ -2,7 +2,7 @@
   "rewrites": [
     {
 		"source": "/api/personal/:path*",
-		"destination": "https://your-render-backend.onrender.com/api/personal/:path*"
+		"destination": "https://les-vues-backend.onrender.com/api/personal/:path*"
 	},
     {
       "source": "/api/auth/:path*",
