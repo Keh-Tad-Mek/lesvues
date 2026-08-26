@@ -72,7 +72,8 @@ function SavedMovies() {
         }
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/saveForLater?page=${targetPage}`, {
+            // add base URL here
+            const response = await fetch(`/api/personal/saveForLater?page=${targetPage}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
@@ -145,7 +146,8 @@ function SavedMovies() {
         setCachedData(CACHE_KEY, updatedMovies, page); // Optimistic UI update
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/saveForLater/${movieId}`, {
+            // add base URL here
+            const response = await fetch(`/api/personal/saveForLater/${movieId}`, {
                 method: "DELETE",
                 credentials: "include"
             });
