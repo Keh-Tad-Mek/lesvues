@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import styles from './savedMovies.module.css';
 import { authClient } from "../lib/auth-client.jsx";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faUser, faDoorOpen, faEnvelope, faPen, faHouse, faBookmark, faHeart } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faUser, faDoorOpen, faEnvelope, faPen, faHouse, faBookmark, faHeart, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/useAuth.jsx';
 import Loading from '../utils/loading.jsx';
@@ -51,16 +51,16 @@ function SavedMovies() {
         setDisplayProfileOptions(prev => prev === "none" ? "flex" : "none");
     };
 
-    const fetchSavedMovies = async (targetPage) => {
-        if (isFetching.current || !hasMore) return;
+    const fetchSavedMovies = async (targetPage, forceRefresh = false) => {
+        // Allow forceRefresh to override an active fetching lock
+        if (isFetching.current && !forceRefresh) return;
         isFetching.current = true;
 
-        // --- CACHE & STALE CHECK ---
         const isStale = localStorage.getItem(STALE_KEY);
         const cached = getCachedData(CACHE_KEY);
         
-        // Only use cache if it exists, the page is within range, AND no changes have been made to the DB
-        if (cached && !isStale && targetPage <= cached.page) {
+        // Use cache only when NOT force-refreshing
+        if (!forceRefresh && cached && !isStale && targetPage <= cached.page) {
             if (targetPage === 1) {
                 setSavedMovies(cached.data);
                 existingIds.current.clear();
@@ -72,14 +72,21 @@ function SavedMovies() {
         }
 
         try {
-            // add base URL here
-            const response = await fetch(`/api/personal/saveForLater?page=${targetPage}`, {
+            const url = forceRefresh 
+                ? `/api/personal/saveForLater?page=${targetPage}&forceRefresh=true`
+                : `/api/personal/saveForLater?page=${targetPage}`;
+
+            const response = await fetch(url, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
             });
 
             if (response.status === 404) {
+                if (targetPage === 1 || forceRefresh) {
+                    setSavedMovies([]);
+                    existingIds.current.clear();
+                }
                 setHasMore(false);
                 return;
             }
@@ -94,42 +101,62 @@ function SavedMovies() {
             else if (data?.movies && Array.isArray(data.movies)) newMovies = data.movies;
 
             if (newMovies.length === 0) {
+                if (targetPage === 1 || forceRefresh) {
+                    setSavedMovies([]);
+                    existingIds.current.clear();
+                }
                 setHasMore(false);
                 return;
             }
 
-            const uniqueNew = newMovies.filter(m => !existingIds.current.has(m.movie_id || m.id));
-            
-            if (uniqueNew.length === 0 && newMovies.length > 0) {
-                setHasMore(false);
-            } else {
-                uniqueNew.forEach(m => existingIds.current.add(m.movie_id || m.id));
-                
-                setSavedMovies(prev => {
-                    // If we are fetching page 1 because it was stale, overwrite instead of appending
-                    const updatedMovies = (targetPage === 1 && isStale) 
-                        ? [...uniqueNew] 
-                        : [...prev, ...uniqueNew];
-                    
-                    // --- UPDATE CACHE & REMOVE STALE FLAG ---
-                    setCachedData(CACHE_KEY, updatedMovies, targetPage);
-                    localStorage.removeItem(STALE_KEY); // Cache is now up to date with DB
-                    
-                    return updatedMovies;
-                });
-                
-                setPage(targetPage);
-                
-                if (newMovies.length < 10) {
-                    setHasMore(false);
-                }
+            // Synchronously reset tracker when resetting page 1 or forcing a refresh
+            if (targetPage === 1 && (forceRefresh || isStale)) {
+                existingIds.current.clear();
             }
+
+            const uniqueNew = newMovies.filter(m => {
+                const idStr = String(m.movie_id || m.id);
+                if (existingIds.current.has(idStr)) return false;
+                existingIds.current.add(idStr);
+                return true;
+            });
+
+            setSavedMovies(prev => {
+                const updatedMovies = (targetPage === 1 && (isStale || forceRefresh)) 
+                    ? [...newMovies] 
+                    : [...prev, ...uniqueNew];
+                    
+                setCachedData(CACHE_KEY, updatedMovies, targetPage);
+                localStorage.removeItem(STALE_KEY); 
+
+                return updatedMovies;
+            });
+            
+            setPage(targetPage);
+            setHasMore(newMovies.length >= 10);
+
         } catch (error) {
             console.error("Error fetching saved movies:", error);
             setHasMore(false);
         } finally {
             isFetching.current = false;
         }
+    };
+
+    const handleRefresh = () => {
+        // 1. Wipe cache keys
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(STALE_KEY);
+        
+        // 2. Reset guard states
+        isFetching.current = false;
+        existingIds.current.clear();
+        setSavedMovies([]);
+        setPage(1);
+        setHasMore(true);
+        
+        // 3. Trigger refetch directly from database
+        fetchSavedMovies(1, true);
     };
 
     const removeSavedMovie = async (movieId, title, e) => {
@@ -242,7 +269,18 @@ function SavedMovies() {
             </header>
                         
             <div className={styles.savedContainer}>
-                <h2>Saved Movies</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <h2>Saved Movies</h2>
+                    {isAuthenticated && (
+                        <button 
+                            onClick={handleRefresh}
+                            style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}
+                            title="Refresh Database"
+                        >
+                            <FontAwesomeIcon icon={faArrowsRotate} />
+                        </button>
+                    )}
+                </div>
                 {!isAuthenticated ? (
                     <div className={styles.authPrompt}>
                         <p>
