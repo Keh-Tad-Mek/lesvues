@@ -57,7 +57,7 @@ export default function MovieGrid({ title, items }) {
         let route = destination === "Favorites" ? "favorites" : "saveForLater";
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/personal/${route}`, {
+            const response = await fetch(`/api/personal/${route}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
