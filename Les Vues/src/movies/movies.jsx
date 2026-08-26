@@ -19,6 +19,26 @@ const PROVIDERS = {
     "2embed": {
         movie: (id) => `https://www.2embed.online/embed/movie/${id}`,
         tv: (id, s, e) => `https://www.2embed.online/embed/tv/${id}/${s}/${e}`
+    },
+    "vidfast": {
+        movie: (id) => `https://vidfast.vc/movie/${id}`,
+        tv: (id, s, e) => `https://vidfast.vc/tv/${id}/${s}/${e}`
+    },
+    "vidup": {
+        movie: (id) => `https://vidup.to/movie/${id}`,
+        tv: (id, s, e) => `https://vidup.to/tv/${id}/${s}/${e}`
+    },
+    "vidnest": {
+        movie: (id) => `https://vidnest.fun/movie/${id}`,
+        tv: (id, s, e) => `https://vidnest.fun/tv/${id}/${s}/${e}`
+    },
+    "vidlink": {
+        movie: (id) => `https://vidlink.pro/movie/${id}`,
+        tv: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`
+    },
+    "111movies": {
+        movie: (id) => `https://111movies.net/movie/${id}`,
+        tv: (id, s, e) => `https://111movies.net/tv/${id}/${s}/${e}`
     }
 };
 
