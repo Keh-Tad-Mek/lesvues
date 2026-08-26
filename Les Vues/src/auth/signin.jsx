@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthForm from '../Components/AuthForm'
-import authStyles from '../Components/AuthForm.module.css'
+import authStyles from '../Components/AuthForm.module.css' // Swapped import path
 import { authClient } from '../lib/auth-client'
 import Loading from '../utils/loading.jsx'
 
@@ -16,7 +16,7 @@ function Signin() {
   const [passwordError, setPasswordError] = useState(false)
   const [displayOTPField, setdisplayOTPField] = useState("none")
   const [errorMessage, setErrorMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false) // new loading state
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -29,16 +29,15 @@ function Signin() {
 
     if (!isEmailEmpty && !isPasswordEmpty) {
       setIsLoading(true)
-      try {
-        const { data, error } = await authClient.signIn.email({
-          email: email,
-          password: password,
-        }, {
-          onSuccess: () => {
+      const { data, error } = await authClient.signIn.email({
+        email: email,
+        password: password,
+      }, {
+        onSuccess: () => {
             setIsLoading(false)
             navigate("/", { replace: true })
-          },
-          onError: (ctx) => {
+        },
+        onError: (ctx) => {
             setIsLoading(false)
             if (ctx.error.status === 403 || ctx.error.message.includes("email_not_verified")) {
                 handleResendOtp() 
@@ -46,13 +45,8 @@ function Signin() {
                 setErrorMessage(ctx.error.message || "Invalid credentials")
                 console.error("Login Error:", ctx.error)
             }
-          }
-        })
-      } catch (error) {
-        setIsLoading(false)
-        setErrorMessage(error.message || "An error occurred")
-        console.error("Login Error:", error)
-      }
+        }
+      })
     }
   }
 
@@ -127,7 +121,7 @@ function Signin() {
           otpValue={otpValue}
           onOtpChange={setOtpValue}
           onVerifyOtp={handleVerifyOtp}
-          isLoading={isLoading} // pass loading state
+          isLoading={isLoading}
         >
         </AuthForm>
       </div>
