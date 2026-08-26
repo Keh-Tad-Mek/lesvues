@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthForm from '../Components/AuthForm'
-import authStyles from '../Components/AuthForm.module.css' // Swapped import path
+import authStyles from '../Components/AuthForm.module.css'
 import { authClient } from '../lib/auth-client'
 
 function calculatePasswordStrength(password) {
@@ -41,6 +41,7 @@ function Signup() {
   const [PasswordBorderColor, setPasswordBorderColor] = useState("transparent")
   const [resendTimer, setResendTimer] = useState(30)
   const [canResend, setCanResend] = useState(false)
+  const [isLoading, setIsLoading] = useState(false) // new loading state
   const { strengthValue, verbalStrengthValue, hue } = calculatePasswordStrength(passwordChecker)
   const { emailIsValid } = checkEmail(emailChecker)
 
@@ -70,19 +71,28 @@ function Signup() {
 
     if (emailIsValid && strengthValue >= 80) {
       const fallbackName = emailChecker.split('@')[0]
-      const { data, error } = await authClient.signUp.email({
-        email: emailChecker,
-        password: passwordChecker,
-        name: fallbackName,
-      })
+      setIsLoading(true)
+      try {
+        const { data, error } = await authClient.signUp.email({
+          email: emailChecker,
+          password: passwordChecker,
+          name: fallbackName,
+        })
 
-      if (error) {
+        if (error) {
+          setIsLoading(false)
+          console.error("Signup failed:", error.message)
+          alert(error.message || "Failed to start signup process")
+        } else {
+          setIsLoading(false)
+          setdisplayOTPField("flex")
+          setResendTimer(30)
+          setCanResend(false)
+        }
+      } catch (error) {
+        setIsLoading(false)
         console.error("Signup failed:", error.message)
         alert(error.message || "Failed to start signup process")
-      } else {
-        setdisplayOTPField("flex")
-        setResendTimer(30)
-        setCanResend(false)
       }
     }
   }
@@ -107,13 +117,13 @@ function Signup() {
 
 		const { data, error } = await authClient.emailOtp.sendVerificationOtp({
 				email: emailChecker,
-				type: "email-verification", // Same type as initial signup
+				type: "email-verification",
 			})
 
 		if (error) {
 			alert("Failed to resend code. Please try again.")
 		} else {
-			setResendTimer(30) // Restart countdown
+			setResendTimer(30)
 			setCanResend(false)
 			alert("A new verification code has been sent!")
 		}
@@ -150,6 +160,7 @@ function Signup() {
         onResendOtp={handleResendOtp}
         canResend={canResend}
         resendTimer={resendTimer}
+        isLoading={isLoading} // pass loading state
       />
     </div>
   )
