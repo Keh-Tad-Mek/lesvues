@@ -2,8 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import favoriteStyles from './favorites.module.css';
 import { authClient } from "../lib/auth-client.jsx";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// Added faArrowsRotate for the refresh button
-import { faXmark, faUser, faDoorOpen, faEnvelope, faPen, faHouse, faBookmark, faHeart, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faUser, faDoorOpen, faEnvelope, faHouse, faBookmark, faHeart, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/useAuth.jsx';
 import Loading from '../utils/loading.jsx';
@@ -20,9 +19,9 @@ function Favorites() {
     // UI States
     const [displayProfileOptions, setDisplayProfileOptions] = useState("none");
     const [displayDialogueBox, setDisplayDialogueBox] = useState('none');
-    const [hoveredId, setHoveredId] = useState(null)
+    const [hoveredId, setHoveredId] = useState(null);
 
-    // Refs for functional guardrails
+    // Guard refs
     const isFetching = useRef(false);
     const observerRef = useRef();
     const existingIds = useRef(new Set()); 
@@ -33,17 +32,15 @@ function Favorites() {
     const handleLogout = async () => {
         try {
             const response = await authClient.signOut();
-            if (response?.error) {
-                console.error("Logout failed.");
-                return;
-            }
+            if (response?.error) return;
+
             localStorage.removeItem('saved_movies_list');
             localStorage.removeItem('saved_movies_list_stale');
             localStorage.removeItem(CACHE_KEY);
             localStorage.removeItem(STALE_KEY);
             setDisplayDialogueBox('none');
         } catch (error) {
-            console.error("Error during log out.");
+            console.error("Error during log out:", error);
         }
     };
 
@@ -51,37 +48,20 @@ function Favorites() {
         setDisplayProfileOptions(prev => prev === "none" ? "flex" : "none");
     };
 
-    // Manual refresh function
-    const handleRefresh = () => {
-        // Clear frontend cache completely
-        localStorage.removeItem(CACHE_KEY);
-        localStorage.removeItem(STALE_KEY);
-        
-        // Reset states
-        setFavoriteMovies([]);
-        existingIds.current.clear();
-        setPage(1);
-        setHasMore(true);
-        
-        // Fetch fresh data, bypassing frontend cache and triggering backend DB fetch
-        fetchFavorites(1, true);
-    };
-
-    // Added forceRefresh parameter
     const fetchFavorites = async (targetPage, forceRefresh = false) => {
-        // Prevent fetching if already doing it, or if no more pages (unless we're forcing a refresh)
-        if (isFetching.current || (!hasMore && !forceRefresh)) return;
+        // Allow forceRefresh to override an active fetching lock
+        if (isFetching.current && !forceRefresh) return;
         isFetching.current = true;
 
         const isStale = localStorage.getItem(STALE_KEY);
         const cached = getCachedData(CACHE_KEY);
         
-        // Only use cache if we are NOT force refreshing
+        // Use cache only when NOT force-refreshing
         if (!forceRefresh && cached && !isStale && targetPage <= cached.page) {
             if (targetPage === 1) {
                 setFavoriteMovies(cached.data);
                 existingIds.current.clear();
-                cached.data.forEach(m => existingIds.current.add(m.movie_id || m.id));
+                cached.data.forEach(m => existingIds.current.add(String(m.movie_id || m.id)));
                 setPage(cached.page);
             }
             isFetching.current = false;
@@ -89,7 +69,6 @@ function Favorites() {
         }
 
         try {
-            // Append forceRefresh query parameter to instruct the backend to skip its cache
             const url = forceRefresh 
                 ? `/api/personal/favorites?page=${targetPage}&forceRefresh=true`
                 : `/api/personal/favorites?page=${targetPage}`;
@@ -101,6 +80,10 @@ function Favorites() {
             });
 
             if (response.status === 404) {
+                if (targetPage === 1 || forceRefresh) {
+                    setFavoriteMovies([]);
+                    existingIds.current.clear();
+                }
                 setHasMore(false);
                 return;
             }
@@ -110,40 +93,42 @@ function Favorites() {
             let newMovies = [];
             if (Array.isArray(data)) newMovies = data;
             else if (data?.data && Array.isArray(data.data)) newMovies = data.data;
-            else if (data?.favorites && Array.isArray(data.favorites)) newMovies = data.favorites;
-            else if (data?.results && Array.isArray(data.results)) newMovies = data.results;
-            else if (data?.movies && Array.isArray(data.movies)) newMovies = data.movies;
 
             if (newMovies.length === 0) {
+                if (targetPage === 1 || forceRefresh) {
+                    setFavoriteMovies([]);
+                    existingIds.current.clear();
+                }
                 setHasMore(false);
                 return;
             }
 
-            const uniqueNew = newMovies.filter(m => !existingIds.current.has(m.movie_id || m.id));
-            
-            if (uniqueNew.length === 0 && newMovies.length > 0) {
-                setHasMore(false);
-            } else {
-                uniqueNew.forEach(m => existingIds.current.add(m.movie_id || m.id));
-                
-                setFavoriteMovies(prev => {
-                    // If page 1 (stale or forced refresh), completely replace the array
-                    const updatedMovies = (targetPage === 1 && (isStale || forceRefresh)) 
-                        ? [...uniqueNew] 
-                        : [...prev, ...uniqueNew];
-                        
-                    setCachedData(CACHE_KEY, updatedMovies, targetPage);
-                    localStorage.removeItem(STALE_KEY); 
-
-                    return updatedMovies;
-                });
-                
-                setPage(targetPage);
-                
-                if (newMovies.length < 10) {
-                    setHasMore(false);
-                }
+            // Synchronously reset tracker when resetting page 1 or forcing a refresh
+            if (targetPage === 1 && (forceRefresh || isStale)) {
+                existingIds.current.clear();
             }
+
+            const uniqueNew = newMovies.filter(m => {
+                const idStr = String(m.movie_id || m.id);
+                if (existingIds.current.has(idStr)) return false;
+                existingIds.current.add(idStr);
+                return true;
+            });
+
+            setFavoriteMovies(prev => {
+                const updatedMovies = (targetPage === 1 && (isStale || forceRefresh)) 
+                    ? [...newMovies] 
+                    : [...prev, ...uniqueNew];
+                    
+                setCachedData(CACHE_KEY, updatedMovies, targetPage);
+                localStorage.removeItem(STALE_KEY); 
+
+                return updatedMovies;
+            });
+            
+            setPage(targetPage);
+            setHasMore(newMovies.length >= 10);
+
         } catch (error) {
             console.error("Error fetching favorites:", error);
             setHasMore(false); 
@@ -152,16 +137,33 @@ function Favorites() {
         }
     };
 
+    const handleRefresh = () => {
+        // 1. Wipe cache keys
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(STALE_KEY);
+        
+        // 2. Reset guard states
+        isFetching.current = false;
+        existingIds.current.clear();
+        setFavoriteMovies([]);
+        setPage(1);
+        setHasMore(true);
+        
+        // 3. Trigger refetch directly from database
+        fetchFavorites(1, true);
+    };
+
     const removeFavorite = async (movieId, e) => {
         e.stopPropagation();
         
         localStorage.setItem(STALE_KEY, Date.now().toString());
         
+        const idStr = String(movieId);
         const previousFavorites = [...favoriteMovies];
-        const updatedFavorites = favoriteMovies.filter(item => (item.movie_id || item.id) !== movieId);
+        const updatedFavorites = favoriteMovies.filter(item => String(item.movie_id || item.id) !== idStr);
         
         setFavoriteMovies(updatedFavorites);
-        existingIds.current.delete(movieId);
+        existingIds.current.delete(idStr);
         setCachedData(CACHE_KEY, updatedFavorites, page);
 
         try {
@@ -170,12 +172,10 @@ function Favorites() {
                 credentials: "include"
             });
 
-            if (!response.ok) {
-                throw new Error("Deletion failed");
-            }
+            if (!response.ok) throw new Error("Deletion failed");
         } catch (error) {
             setFavoriteMovies(previousFavorites);
-            existingIds.current.add(movieId);
+            existingIds.current.add(idStr);
             setCachedData(CACHE_KEY, previousFavorites, page);
         }
     };
@@ -189,15 +189,10 @@ function Favorites() {
             }
         }, { threshold: 0.1 });
 
-        if (node) {
-            observerRef.current.observe(node);
-        }
+        if (node) observerRef.current.observe(node);
     }, [page, hasMore]); 
 
     useEffect(() => {
-        if (favoriteMovies.length === 0) {
-            existingIds.current.clear();
-        }
         fetchFavorites(1);
     }, []);
 
@@ -248,7 +243,6 @@ function Favorites() {
                                 </div>
                             ) : (
                                 <div className={favoriteStyles.loggedOut}>
-                                    <Link to="/signup">Sign Up</Link>
                                     <Link to="/signin">Sign In</Link>
                                 </div>
                             )}
@@ -258,13 +252,11 @@ function Favorites() {
             </header>
                         
             <div className={favoriteStyles.favoritesContainer}>
-                {/* Header paired with the refresh button */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <h2>Your Favorites</h2>
                     {isAuthenticated && (
                         <button 
                             onClick={handleRefresh}
-                            className={favoriteStyles.refreshButton}
                             style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}
                             title="Refresh Database"
                         >
@@ -291,19 +283,17 @@ function Favorites() {
                                 <div 
                                     key={itemId} 
                                     className={favoriteStyles.movieCard}
-                                    onMouseOver={(e) => setHoveredId(item.movie_id)}
-                                    onMouseLeave={(e) => setHoveredId(null)}
+                                    onMouseOver={() => setHoveredId(itemId)}
+                                    onMouseLeave={() => setHoveredId(null)}
                                     onClick={() => {
                                         const movieTitle = item.title || item.name;
-                                        const key = `${movieTitle}_${item.movie_id}`;
+                                        const key = `${movieTitle}_${itemId}`;
                                         setCachedData(key, item);
                                         navigate(`/movies/${key}`);
                                     }}
                                 >
                                     <div className={favoriteStyles.moviecardheader}
-                                        style={{ 
-                                            display: hoveredId === item.movie_id ? "flex" : "none"
-                                        }}     
+                                        style={{ display: hoveredId === itemId ? "flex" : "none" }}     
                                     >
                                         <button 
                                             className={favoriteStyles.removeButton}
