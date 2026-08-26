@@ -256,7 +256,6 @@
 
 
 /* RESPONSIVE DESIGN FOR HALF SCREEN / MOBILE */
-/* RESPONSIVE DESIGN FOR HALF SCREEN / MOBILE */
 @media (max-width: 992px) {
 
   /* 1. Hide the text headers at the top */
@@ -304,18 +303,26 @@
     color: #0ea5e9;
   }
 
+  /* Updated to make servers display horizontally on smaller screens */
   .serverSidebar {
     max-width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
-    text-align: center;
   }
 
   .serverTitle {
+    width: 100%;
     text-align: center;
+    margin-bottom: 10px;
   }
 
   .serverButton {
-    max-width: 400px;
+    width: auto;
+    flex: 0 1 auto;
     text-align: center;
+    padding: 8px 16px;
+    white-space: nowrap;
   }
 }
