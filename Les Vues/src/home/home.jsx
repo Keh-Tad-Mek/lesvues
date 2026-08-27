@@ -2,8 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import homeStyles from './home.module.css';
 import MovieGrid from './movieGrid.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// Imported the requested Navigation Icons
-import { faEnvelope, faMagnifyingGlass, faUser, faPen, faDoorOpen, faHouse, faBookmark, faHeart } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faMagnifyingGlass, faUser, faPen, faDoorOpen, faHouse, faBookmark, faHeart, faStar, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { filterUnique, cleanExpiredCache, getCachedData, setCachedData, updateCachedData } from '../utils/cacheUtils.js';
 import { useAuth } from '../lib/useAuth.jsx';
@@ -23,6 +22,10 @@ function Home() {
     const [searchResultPage, setSearchResultPage] = useState(0);
     const [searchTotalPages, setSearchTotalPages] = useState(1);
     const [displaySearchResults, setDisplaySearchResults] = useState(false);
+
+    // --- Search Hover/Options States ---
+    const [hoveredSearchId, setHoveredSearchId] = useState(null);
+    const [searchOptionsId, setSearchOptionsId] = useState(null);
 
     // --- Profile Related states ---
     const [displayProfileOptions, setDisplayProfileOptions] = useState("none")
@@ -45,7 +48,6 @@ function Home() {
     const navigate = useNavigate()
     const { isAuthenticated, isPending, user } = useAuth()
 
-
     const handleLogout = async () => {
         try {
             const response = await authClient.signOut();
@@ -65,6 +67,75 @@ function Home() {
 
     const toggleProfileOptions = () => {
         setDisplayProfileOptions(prev => prev === "none" ? "flex" : "none");
+    };
+
+    const saveMovies = async (destination, movie) => {
+        if (!destination || !movie) return;
+        if (destination !== "Favorites" && destination !== "Watch Later") return;
+        if (!(typeof movie === 'object')) return;
+
+        if (!((movie.id && typeof movie.id === 'number') && 
+            ((movie.title && typeof movie.title === 'string') || 
+            (movie.name && typeof movie.name === 'string')) &&
+            (movie.backdrop_path && 
+            typeof movie.backdrop_path === 'string' &&
+            movie.backdrop_path[0] === '/') &&
+            (movie.poster_path && 
+            typeof movie.poster_path === 'string' &&
+            movie.poster_path[0] === '/') &&
+            (movie.overview && typeof movie.overview === 'string') &&
+            (movie.media_type && 
+            (movie.media_type === 'tv' || movie.media_type === 'movie')) &&
+            (movie.vote_average !== undefined &&
+            typeof movie.vote_average === 'number' && 
+            movie.vote_average >= 0 &&
+            movie.vote_average <= 10)
+        )) return;
+
+        const ID = movie.id;
+        const movieTitle = movie.title || movie.name;
+        const backDropPath = movie.backdrop_path;
+        const posterPath = movie.poster_path;
+        const overview = movie.overview;
+        const mediaType = movie.media_type;
+        const rating = movie.vote_average;
+
+        let route = destination === "Favorites" ? "favorites" : "saveForLater";
+
+        try {
+            const response = await fetch(`/api/personal/${route}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    "id": ID,
+                    "title": movieTitle,
+                    "backDropPath": backDropPath,
+                    "posterPath": posterPath,
+                    "overview": overview,
+                    "mediaType": mediaType,
+                    "rating": rating
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                if (destination === "Favorites") {
+                    localStorage.setItem('favorite_movies_list_stale', Date.now().toString());
+                } else if (destination === "Watch Later") {
+                    localStorage.setItem('saved_movies_list_stale', Date.now().toString());
+                }
+
+                alert(`"${movieTitle}" saved to ${destination}!`);
+            } else {
+                alert(data.error || 'Save failed. Please try again.');
+            }
+        } catch (error) {
+            alert('Network error. Save failed.');
+        }
     };
 
     const fetchTrending = async (targetPage, trigger) => {
@@ -113,11 +184,9 @@ function Home() {
         }
     };
 
-
     const queryCleanUp = (query) => {
         return query.toLowerCase().split(' ').filter(word => !STOP_WORDS.has(word)).join(' ')
     }
-
 
     const search = async (query, pageToFetch) => {
         const cleanQuery = query;
@@ -150,13 +219,11 @@ function Home() {
                 return;
             }
 
-
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/movies/search?query=${encodeURIComponent(cleanQuery)}&page=${pageToFetch}`,
                 { signal: controller.signal }
             );
             const data = await response.json();
-
 
             if (activeSearchQueryRef.current !== cleanQuery) {
                 return;
@@ -198,7 +265,6 @@ function Home() {
         }
     };
 
-
     const searchResultPaginRef = useCallback(node => {
         if (searchObserver.current) searchObserver.current.disconnect();
 
@@ -225,7 +291,6 @@ function Home() {
         }
     }, [movieSearch, searchResultPage, searchTotalPages]);
 
-
     const lastMovieElementRef = useCallback(node => {
         if (movieObserver.current) movieObserver.current.disconnect();
         movieObserver.current = new IntersectionObserver(entries => {
@@ -245,7 +310,6 @@ function Home() {
             movieObserver.current = null;
         }
     }, [cachedMovies, networkPage]);
-
 
     const lastSeriesElementRef = useCallback(node => {
         if (seriesObserver.current) seriesObserver.current.disconnect();
@@ -268,12 +332,10 @@ function Home() {
         }
     }, [cachedSeries, networkPage]);
 
-
     useEffect(() => {
         cleanExpiredCache();
         fetchTrending(1, "initial");
     }, []);
-
 
     useEffect(() => {
         const query = queryCleanUp(movieSearch.trim());
@@ -302,14 +364,11 @@ function Home() {
         return () => clearTimeout(timer);
     }, [movieSearch]);
 
-
-
     return (
         <div className={homeStyles.root}>
             <header>
                 <h1 style={{ color: 'white', marginLeft: '20px' }}>LesVues</h1>
                 
-                {/* NEW WRAPPER for Navigation & Profile */}
                 <div className={homeStyles.actionContainer}>
                     <div className={homeStyles.Nav}>
                         <nav>
@@ -384,19 +443,117 @@ function Home() {
                     </div>
                     {displaySearchResults && searchResults.length > 0 && (
                         <div className={homeStyles.searchResults}>
-                            {searchResults.map(item => (
-                                <div key={item.id} className={homeStyles.searchResultItem}
-                                    onMouseDown={() => {
-                                        const title = item.title || item.name
-                                        const key = `${title}_${item.id}`
-                                        setCachedData(key, item)
-                                        navigate(`/movies/${key}`)
-                                    }}
-                                >
-                                    <img src={`https://image.tmdb.org/t/p/w92${item.poster_path}`} alt={item.title || item.name} />
-                                    <span>{item.title || item.name}</span>
-                                </div>
-                            ))}
+                            {searchResults.map(item => {
+                                const isHovered = hoveredSearchId === item.id;
+                                const isOptionsOpen = searchOptionsId === item.id;
+
+                                return (
+                                    <div 
+                                        key={item.id} 
+                                        className={homeStyles.searchResultItem}
+                                        onMouseEnter={() => setHoveredSearchId(item.id)}
+                                        onMouseLeave={() => {
+                                            setHoveredSearchId(null);
+                                            setSearchOptionsId(null);
+                                        }}
+                                    >
+                                        <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+                                            <img 
+                                                src={`https://image.tmdb.org/t/p/w92${item.poster_path}`} 
+                                                alt={item.title || item.name} 
+                                                style={{ cursor: 'pointer' }}
+                                                onMouseDown={() => {
+                                                    const title = item.title || item.name;
+                                                    const key = `${title}_${item.id}`;
+                                                    setCachedData(key, item);
+                                                    navigate(`/movies/${key}`);
+                                                }}
+                                            />
+                                            <span 
+                                                style={{ cursor: 'pointer', flex: 1 }}
+                                                onMouseDown={() => {
+                                                    const title = item.title || item.name;
+                                                    const key = `${title}_${item.id}`;
+                                                    setCachedData(key, item);
+                                                    navigate(`/movies/${key}`);
+                                                }}
+                                            >
+                                                {item.title || item.name}
+                                            </span>
+                                            
+                                            {isHovered && (
+                                                <button
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: 'white',
+                                                        fontSize: '18px',
+                                                        cursor: 'pointer',
+                                                        padding: '5px 10px'
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSearchOptionsId(isOptionsOpen ? null : item.id);
+                                                    }}
+                                                >
+                                                    <FontAwesomeIcon icon={faEllipsisV} />
+                                                </button>
+                                            )}
+
+                                            {isOptionsOpen && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    right: '0',
+                                                    top: '100%',
+                                                    backgroundColor: '#333',
+                                                    borderRadius: '6px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    zIndex: 10,
+                                                    minWidth: '150px',
+                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                                                }}>
+                                                    <button
+                                                        style={{
+                                                            padding: '8px 16px',
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            color: 'white',
+                                                            cursor: 'pointer',
+                                                            textAlign: 'left',
+                                                            borderBottom: '1px solid #555'
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            saveMovies("Favorites", item);
+                                                            setSearchOptionsId(null);
+                                                        }}
+                                                    >
+                                                        Add to Favorites
+                                                    </button>
+                                                    <button
+                                                        style={{
+                                                            padding: '8px 16px',
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            color: 'white',
+                                                            cursor: 'pointer',
+                                                            textAlign: 'left'
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            saveMovies("Watch Later", item);
+                                                            setSearchOptionsId(null);
+                                                        }}
+                                                    >
+                                                        Save for Later
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                             <div ref={searchResultPaginRef} style={{ height: '20px', width: '100%' }} />
                         </div>
                     )}
