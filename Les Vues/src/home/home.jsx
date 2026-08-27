@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import homeStyles from './home.module.css';
 import MovieGrid from './movieGrid.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faMagnifyingGlass, faUser, faPen, faDoorOpen, faHouse, faBookmark, faHeart, faStar, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faMagnifyingGlass, faUser, faPen, faDoorOpen, faHouse, faBookmark, faHeart, faStar, faEllipsisV, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { filterUnique, cleanExpiredCache, getCachedData, setCachedData, updateCachedData } from '../utils/cacheUtils.js';
 import { useAuth } from '../lib/useAuth.jsx';
@@ -26,6 +26,9 @@ function Home() {
     // --- Search Hover/Options States ---
     const [hoveredSearchId, setHoveredSearchId] = useState(null);
     const [searchOptionsId, setSearchOptionsId] = useState(null);
+
+    // --- Toast State ---
+    const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
     // --- Profile Related states ---
     const [displayProfileOptions, setDisplayProfileOptions] = useState("none")
@@ -67,6 +70,13 @@ function Home() {
 
     const toggleProfileOptions = () => {
         setDisplayProfileOptions(prev => prev === "none" ? "flex" : "none");
+    };
+
+    const triggerToast = (message, type) => {
+        setToast({ show: true, message, type });
+        setTimeout(() => {
+            setToast(prev => ({ ...prev, show: false }));
+        }, 3500);
     };
 
     const saveMovies = async (destination, movie) => {
@@ -129,12 +139,12 @@ function Home() {
                     localStorage.setItem('saved_movies_list_stale', Date.now().toString());
                 }
 
-                alert(`"${movieTitle}" saved to ${destination}!`);
+                triggerToast(`"${movieTitle}" saved to ${destination}!`, 'success');
             } else {
-                alert(data.error || 'Save failed. Please try again.');
+                triggerToast(data.error || 'Save failed. Please try again.', 'error');
             }
         } catch (error) {
-            alert('Network error. Save failed.');
+            triggerToast('Network error. Save failed.', 'error');
         }
     };
 
@@ -602,6 +612,41 @@ function Home() {
                     </div>
                 </div>
             </div>
+
+            {toast.show && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: '30px',
+                    right: '30px',
+                    zIndex: 9999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '14px 20px',
+                    backgroundColor: 'hsl(0, 0%, 15%)',
+                    border: `1px solid ${toast.type === 'success' ? '#2ecc71' : '#e74c3c'}`,
+                    borderRadius: '8px',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                    color: 'white',
+                    fontFamily: 'monospace',
+                    fontSize: '14px',
+                }}>
+                    <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        backgroundColor: toast.type === 'success' ? '#2ecc71' : '#e74c3c',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '12px'
+                    }}>
+                        <FontAwesomeIcon icon={toast.type === 'success' ? faCheck : faXmark} />
+                    </div>
+                    <span>{toast.message}</span>
+                </div>
+            )}
         </div>
     );
 }
