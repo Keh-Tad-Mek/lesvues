@@ -374,20 +374,6 @@ function Home() {
         return () => clearTimeout(timer);
     }, [movieSearch]);
 
-    // Modified onBlur to ignore clicks inside the search results dropdown
-    const handleSearchBlur = (e) => {
-        // Check if the related target (the element gaining focus) is inside the search results container
-        const searchWrapper = e.currentTarget.closest('.searchWrapper');
-        const searchResultsContainer = searchWrapper?.querySelector('.searchResults');
-        
-        // If the next active element is inside the search results, don't close
-        if (searchResultsContainer && searchResultsContainer.contains(e.relatedTarget)) {
-            return;
-        }
-        
-        setTimeout(() => setDisplaySearchResults(false), 200);
-    };
-
     return (
         <div className={homeStyles.root}>
             <header>
@@ -460,7 +446,15 @@ function Home() {
                                     setDisplaySearchResults(true);
                                 }
                             }}
-                            onBlur={handleSearchBlur}
+                            onBlur={(e) => {
+                                // Check if the related target is inside the search results
+                                const relatedTarget = e.relatedTarget;
+                                const searchResultsElement = document.querySelector(`.${homeStyles.searchResults}`);
+                                if (searchResultsElement && searchResultsElement.contains(relatedTarget)) {
+                                    return;
+                                }
+                                setTimeout(() => setDisplaySearchResults(false), 200);
+                            }}
                         />
                     </div>
                     {displaySearchResults && searchResults.length > 0 && (
@@ -513,6 +507,10 @@ function Home() {
                                                         cursor: 'pointer',
                                                         padding: '5px 10px'
                                                     }}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                    }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setSearchOptionsId(isOptionsOpen ? null : item.id);
@@ -534,7 +532,12 @@ function Home() {
                                                     zIndex: 10,
                                                     minWidth: '150px',
                                                     boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                                                }}>
+                                                }}
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
+                                                >
                                                     <button
                                                         style={{
                                                             padding: '8px 16px',
@@ -544,6 +547,10 @@ function Home() {
                                                             cursor: 'pointer',
                                                             textAlign: 'left',
                                                             borderBottom: '1px solid #555'
+                                                        }}
+                                                        onMouseDown={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
                                                         }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -561,6 +568,10 @@ function Home() {
                                                             color: 'white',
                                                             cursor: 'pointer',
                                                             textAlign: 'left'
+                                                        }}
+                                                        onMouseDown={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
                                                         }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
