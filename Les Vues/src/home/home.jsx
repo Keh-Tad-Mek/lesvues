@@ -374,6 +374,20 @@ function Home() {
         return () => clearTimeout(timer);
     }, [movieSearch]);
 
+    // Modified onBlur to ignore clicks inside the search results dropdown
+    const handleSearchBlur = (e) => {
+        // Check if the related target (the element gaining focus) is inside the search results container
+        const searchWrapper = e.currentTarget.closest('.searchWrapper');
+        const searchResultsContainer = searchWrapper?.querySelector('.searchResults');
+        
+        // If the next active element is inside the search results, don't close
+        if (searchResultsContainer && searchResultsContainer.contains(e.relatedTarget)) {
+            return;
+        }
+        
+        setTimeout(() => setDisplaySearchResults(false), 200);
+    };
+
     return (
         <div className={homeStyles.root}>
             <header>
@@ -446,9 +460,7 @@ function Home() {
                                     setDisplaySearchResults(true);
                                 }
                             }}
-                            onBlur={() => {
-                                setTimeout(() => setDisplaySearchResults(false), 200);
-                            }}
+                            onBlur={handleSearchBlur}
                         />
                     </div>
                     {displaySearchResults && searchResults.length > 0 && (
